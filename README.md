@@ -13,6 +13,24 @@ End-to-end ISP network observability and predictive analytics project. It turns 
 - Streamlit + Plotly dashboard
 - Unit tests, lint gate, and GitHub Actions CI
 
+## Dashboard preview
+
+![ISP Network Reliability Dashboard](docs/dashboard_overview.png)
+
+*Captured from the Streamlit app running on the synthetic dataset (20,175 records across 5 sites and 15 devices).*
+
+What the screenshot shows:
+
+| Area | Description |
+|---|---|
+| **Sidebar — Data source** | `Upload telemetry CSV` control for importing your own dataset, plus a multi-select site filter |
+| **KPI row** | Uptime SLA 99.58%, average latency 46.4 ms, average packet loss 1.01%, and 1,085 incident intervals |
+| **SLA uptime by site** | Bar chart of per-site uptime, colored by average latency; SITE-03 is the lowest at 99.38% |
+| **Hourly degradation trend** | Two-week view of latency and packet-loss movement, showing the daily peak-hour cycle |
+| **Bandwidth utilization** | Box plot of utilization distribution per site, with medians near 50% and upper whiskers reaching capacity |
+| **Incidents by device type** | Grouped bars comparing Access Point vs Router incidents; SITE-03 dominates both |
+| **Next-interval incident risk** | Top-10 risk table sorted by predicted probability; SITE-03 devices lead at up to 98.0% |
+
 ## Repository
 
 ```text
@@ -20,7 +38,10 @@ network-performance-analytics/
 ├── .github/workflows/ci.yml
 ├── data/                         # generated locally; raw CSV and SQLite ignored
 ├── dashboard/app.py
+├── docs/
+│   └── dashboard_overview.png    # README screenshot
 ├── notebooks/exploratory_analysis.ipynb
+├── scripts/capture_screenshot.py
 ├── src/
 │   ├── analytics.py
 │   ├── database.py
@@ -49,6 +70,14 @@ streamlit run dashboard/app.py
 ```
 
 Open the URL printed by Streamlit.
+
+To regenerate the README screenshot while the app is running:
+
+```bash
+pip install playwright
+playwright install chromium
+python scripts/capture_screenshot.py   # writes docs/dashboard_overview.png
+```
 
 ## Uploading your own telemetry
 
