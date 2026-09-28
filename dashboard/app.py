@@ -1,15 +1,19 @@
 from pathlib import Path
 import shutil
 import sqlite3
+import sys
 import joblib
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from src.database import create_database
 from src.ml_model import train_risk_model
 
-ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data/raw_network_telemetry.csv"
 DB = ROOT / "data/network_metrics.db"
 MODEL = ROOT / "src/risk_model.pkl"
@@ -65,7 +69,7 @@ kpi[2].metric("Avg packet loss", f"{filtered.packet_loss_pct.mean():.2f}%")
 kpi[3].metric("Incidents", f"{filtered.is_incident.sum():,}")
 
 summary = filtered.groupby("site_id", as_index=False).agg(uptime_sla=("uptime_status", lambda x: 100 * x.mean()), avg_latency=("latency_ms", "mean"), incidents=("is_incident", "sum"))
-st.plotly_chart(px.bar(summary, x="site_id", y="uptime_sla", color="avg_latency", title="SLA uptime by site", text_auto=".2f"), use_container_width=True)
+st.plotly_chart(px.bar(summary, x="site_id", y="uptime_sla", color="avg_latency", color_continuous_scale="Blues", title="SLA uptime by site", text_auto=".2f", labels={"uptime_sla": "Uptime SLA (%)", "avg_latency": "Avg latency (ms)"}), use_container_width=True)
 
 hourly = filtered.set_index("timestamp").resample("1h").agg(latency_ms=("latency_ms", "mean"), packet_loss_pct=("packet_loss_pct", "mean")).reset_index()
 st.plotly_chart(px.line(hourly, x="timestamp", y=["latency_ms", "packet_loss_pct"], title="Hourly degradation trend"), use_container_width=True)
