@@ -1,0 +1,8 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+src/risk_model.pkl
+data/*.csv
+data/*.db
+.streamlit/
