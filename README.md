@@ -50,6 +50,12 @@ streamlit run dashboard/app.py
 
 Open the URL printed by Streamlit.
 
+## Uploading your own telemetry
+
+The dashboard sidebar has a **Upload telemetry CSV** control. It accepts a CSV with the columns listed under Data model, validates the schema, backs up the previous dataset, rebuilds SQLite, and retrains the risk model. The dataset is stored locally and is not committed to Git.
+
+This is a manual import, not a live feed. Real-time telemetry needs a collector (SNMP, MikroTik/UniFi API, Prometheus, NetFlow, or syslog) plus a scheduled refresh.
+
 ## Data model
 
 | Column | Meaning |

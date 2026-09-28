@@ -1,17 +1,49 @@
 from pathlib import Path
+import shutil
 import sqlite3
 import joblib
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from src.database import create_database
+from src.ml_model import train_risk_model
+
 ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data/raw_network_telemetry.csv"
 DB = ROOT / "data/network_metrics.db"
 MODEL = ROOT / "src/risk_model.pkl"
+REQUIRED_COLUMNS = {
+    "timestamp", "site_id", "device_id", "device_type", "uptime_status",
+    "latency_ms", "packet_loss_pct", "bandwidth_usage_mbps",
+    "bandwidth_capacity_mbps", "cpu_utilization_pct", "is_incident",
+}
 
 st.set_page_config(page_title="ISP Network Reliability", layout="wide")
 st.title("ISP Network Reliability Dashboard")
-st.caption("Synthetic telemetry • SLA monitoring • next-interval incident risk")
+st.caption("CSV telemetry upload • SLA monitoring • next-interval incident risk")
+
+with st.sidebar:
+    st.header("Data source")
+    uploaded = st.file_uploader("Upload telemetry CSV", type="csv")
+    if uploaded is not None and st.button("Import CSV", type="primary"):
+        try:
+            incoming = pd.read_csv(uploaded)
+            missing = REQUIRED_COLUMNS - set(incoming.columns)
+            if missing:
+                raise ValueError(f"Missing columns: {', '.join(sorted(missing))}")
+            if incoming.empty:
+                raise ValueError("CSV is empty")
+            if DATA.exists():
+                shutil.copy2(DATA, DATA.with_suffix(".csv.bak"))
+            incoming.to_csv(DATA, index=False)
+            create_database(DB, DATA)
+            metrics = train_risk_model(DATA, MODEL)
+            st.cache_data.clear()
+            st.success(f"Imported {len(incoming):,} rows. Model ROC-AUC: {metrics['roc_auc']:.3f}")
+            st.rerun()
+        except (ValueError, pd.errors.ParserError) as exc:
+            st.error(f"Import failed: {exc}")
 
 @st.cache_data
 def load_data():
